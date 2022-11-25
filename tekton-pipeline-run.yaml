@@ -1,0 +1,42 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  generateName: build-push-pipeline-run-
+spec:
+  serviceAccountName: tekton-pipeline-privileged-runner
+  podTemplate:
+    securityContext:
+      runAsUser: 0
+  workspaces:
+    - name: source
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi
+    - name: ssh-directory
+      secret:
+        secretName: tekton-ssh-key
+    - name: docker-config
+      secret:
+        secretName: tekton-docker-config
+  params:
+    - name: gitrepo
+      value: ${GIT_REPO}
+    - name: gitrevision
+      value: ${GIT_REVISION}
+    - name: gitrefspec
+      value: ${GIT_REF_SPEC}
+    - name: gitbranch
+      value: ${GIT_BRANCH}
+    - name: gitshortsha
+      value: ${GIT_SHORT_SHA}
+    - name: imageUrl
+      value: dockerprivate.apps.okd.sebbia.org/sebbia/kratos-selfservice-ui-node
+    - name: kanikoExtraArgs
+      value:
+        - --skip-tls-verify
+  pipelineRef:
+    name: build-push-pipeline
